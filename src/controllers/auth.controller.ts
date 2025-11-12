@@ -1,3 +1,4 @@
+import HTTP_CODES from "../constants/httpCodes.js";
 import { login, signup } from "../services/auth.service.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import {
@@ -20,7 +21,7 @@ export const signupHandler = asyncHandler(async (req, res) => {
   });
 
   // send response
-  res.json({
+  res.status(HTTP_CODES.CREATED).json({
     success: true,
     data: { user, accessToken },
     message: "User created successfully.",
@@ -41,7 +42,7 @@ export const loginHandler = asyncHandler(async (req, res) => {
   });
 
   // send response
-  res.json({
+  res.status(HTTP_CODES.OK).json({
     success: true,
     data: { user, accessToken },
     message: "User logged in successfully.",
