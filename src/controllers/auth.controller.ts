@@ -10,12 +10,19 @@ export const signupHandler = asyncHandler(async (req, res) => {
   const request = signupValidationSchema.parse(req.body);
 
   // call a service
-  const user = await signup(request);
+  const { user, accessToken, refreshToken } = await signup(request);
+
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    sameSite: "strict",
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+    path: "/refresh",
+  });
 
   // send response
   res.json({
     success: true,
-    data: user,
+    data: { user, accessToken },
     message: "User created successfully.",
   });
 });
@@ -24,12 +31,19 @@ export const loginHandler = asyncHandler(async (req, res) => {
   // validate a request
   const request = loginValidationSchema.parse(req.body);
   // call a service
-  const user = await login(request);
+  const { user, accessToken, refreshToken } = await login(request);
+
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    sameSite: "strict",
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+    path: "/refresh",
+  });
 
   // send response
   res.json({
     success: true,
-    data: user,
+    data: { user, accessToken },
     message: "User logged in successfully.",
   });
 });

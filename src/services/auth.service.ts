@@ -1,8 +1,10 @@
+import jwt from "jsonwebtoken";
 import pool from "../config/db.js";
 import HTTP_CODES from "../constants/httpCodes.js";
-import type { User } from "../types/user.type.js";
+import type { SafeUser, User } from "../types/user.type.js";
 import ApiError from "../utils/apiError.js";
 import { hashPassword, validatePassword } from "../utils/password.js";
+import env from "../config/env.js";
 
 interface SignupParams {
   username: string;
@@ -21,12 +23,21 @@ export const signup = async ({ email, password, username }: SignupParams) => {
 
   const hashedPassword = await hashPassword(password);
 
-  const user = await pool.query<Omit<User, "Password">>(
+  const result = await pool.query<SafeUser>(
     "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id, username, email, is_verified, profile_image, created_at, updated_at",
     [username, email, hashedPassword]
   );
 
-  return user.rows[0] as Omit<User, "password">;
+  const user = result.rows[0] as SafeUser;
+
+  const accessToken = jwt.sign({ userId: user.id }, env.ACCESS_TOKEN_SECRET, {
+    expiresIn: "15m",
+  });
+  const refreshToken = jwt.sign({ userId: user.id }, env.REFRESH_TOKEN_SECRET, {
+    expiresIn: "30d",
+  });
+
+  return { user, accessToken, refreshToken };
 };
 
 interface LoginParams {
@@ -51,6 +62,13 @@ export const login = async ({ email, password }: LoginParams) => {
     throw new ApiError(HTTP_CODES.NOT_FOUND, "Incorrect email or password.");
   }
 
+  const accessToken = jwt.sign({ userId: user.id }, env.ACCESS_TOKEN_SECRET, {
+    expiresIn: "15m",
+  });
+  const refreshToken = jwt.sign({ userId: user.id }, env.REFRESH_TOKEN_SECRET, {
+    expiresIn: "30d",
+  });
+
   const { password: _, ...safeUser } = user;
-  return safeUser;
+  return { user: safeUser, accessToken, refreshToken };
 };
