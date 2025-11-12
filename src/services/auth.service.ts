@@ -45,7 +45,7 @@ export const login = async ({ email, password }: LoginParams) => {
 
   const user = result.rows[0] as User;
 
-  const isPasswordValid = validatePassword(user.password, password);
+  const isPasswordValid = await validatePassword(user.password, password);
 
   if (!isPasswordValid) {
     throw new ApiError(HTTP_CODES.NOT_FOUND, "Incorrect email or password.");
