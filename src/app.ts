@@ -2,6 +2,7 @@ import express from "express";
 import cookieParser from "cookie-parser";
 
 import { authRouter } from "./routes/index.js";
+import { errorHandler } from "./middlewares/errorHandler.middleware.js";
 
 const app = express();
 
@@ -17,5 +18,8 @@ app.get("/", (_, res) => {
 
 // Routes
 app.use("/auth", authRouter);
+
+// error handler middleware
+app.use(errorHandler);
 
 export default app;

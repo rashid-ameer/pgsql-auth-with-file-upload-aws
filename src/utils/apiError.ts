@@ -1,4 +1,4 @@
-import type HTTP_ERRORS from "../constants/httpErrors.js";
+import HTTP_ERRORS from "../constants/httpCodes.js";
 
 class ApiError extends Error {
   public status: number;
