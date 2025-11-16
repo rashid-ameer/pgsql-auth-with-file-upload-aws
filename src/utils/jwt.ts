@@ -1,8 +1,16 @@
 import jwt from "jsonwebtoken";
 
-const verifyToken = (token: string, secret: string) => {
+export interface AccessTokenPayload {
+  userId: string;
+}
+
+export interface RefreshTokenPayload {
+  userId: string;
+}
+
+const verifyToken = <T>(token: string, secret: string) => {
   try {
-    const payload = jwt.verify(token, secret) as { userId: string };
+    const payload = jwt.verify(token, secret) as T;
     return { payload };
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {

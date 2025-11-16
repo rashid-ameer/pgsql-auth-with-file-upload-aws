@@ -8,17 +8,17 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, _) => {
   console.log(err);
 
   if (err instanceof ZodError) {
-    res
-      .status(HTTP_CODES.BAD_REQUEST)
-      .json({
-        success: false,
-        message: err.issues[0]?.message || "Request body issues.",
-      });
+    res.status(HTTP_CODES.BAD_REQUEST).json({
+      success: false,
+      message: err.issues[0]?.message || "Request body issues.",
+    });
     return;
   }
 
   if (err instanceof ApiError) {
-    res.status(err.status).json({ success: false, message: err.message });
+    res
+      .status(err.status)
+      .json({ success: false, message: err.message, errorCode: err.errorCode });
     return;
   }
 

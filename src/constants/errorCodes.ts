@@ -1,0 +1,5 @@
+enum ERROR_CODES {
+  INVALID_ACCESS_TOKEN = "INVALID_ACCESS_TOKEN",
+}
+
+export default ERROR_CODES;
