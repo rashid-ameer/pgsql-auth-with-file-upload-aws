@@ -1,8 +1,9 @@
 import ERROR_CODES from "../constants/errorCodes.js";
 import HTTP_CODES from "../constants/httpCodes.js";
-import { login, signup } from "../services/auth.service.js";
+import { login, refreshAccessToken, signup } from "../services/auth.service.js";
 import ApiError from "../utils/apiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import { clearAuthCookies } from "../utils/cookies.js";
 import {
   loginValidationSchema,
   signupValidationSchema,
@@ -19,7 +20,7 @@ export const signupHandler = asyncHandler(async (req, res) => {
     httpOnly: true,
     sameSite: "strict",
     maxAge: 30 * 24 * 60 * 60 * 1000,
-    path: "/refresh",
+    path: "/auth/refresh",
   });
 
   // send response
@@ -40,7 +41,7 @@ export const loginHandler = asyncHandler(async (req, res) => {
     httpOnly: true,
     sameSite: "strict",
     maxAge: 30 * 24 * 60 * 60 * 1000,
-    path: "/refresh",
+    path: "/auth/refresh",
   });
 
   // send response
@@ -54,6 +55,7 @@ export const loginHandler = asyncHandler(async (req, res) => {
 export const refreshAccessTokenHandler = asyncHandler(async (req, res) => {
   // validate a request
   const refreshToken: string | undefined = req.cookies["refreshToken"];
+  console.log(refreshToken);
   if (!refreshToken) {
     throw new ApiError(
       HTTP_CODES.UNAUTHORIZED,
@@ -61,4 +63,23 @@ export const refreshAccessTokenHandler = asyncHandler(async (req, res) => {
       ERROR_CODES.REFRESH_TOKEN_ERROR
     );
   }
+
+  // call a service
+  const { accessToken, newRefreshToken } = await refreshAccessToken(
+    refreshToken
+  );
+
+  res.cookie("refreshToken", newRefreshToken, {
+    httpOnly: true,
+    sameSite: "strict",
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+    path: "/auth/refresh",
+  });
+
+  // send a response
+  res.status(HTTP_CODES.OK).json({
+    success: true,
+    data: { accessToken },
+    message: "Access token refreshed successfully.",
+  });
 });

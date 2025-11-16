@@ -76,13 +76,17 @@ export const login = async ({ email, password }: LoginParams) => {
   return { user: safeUser, accessToken, refreshToken };
 };
 
-export const refreshToken = async (refreshToken: string) => {
+export const refreshAccessToken = async (refreshToken: string) => {
   const { payload, error } = verifyToken<RefreshTokenPayload>(
     refreshToken,
     env.refreshTokenSecret
   );
   if (!payload) {
-    throw new ApiError(HTTP_CODES.UNAUTHORIZED, error, ERROR_CODES.REFRESH_TOKEN_ERROR);
+    throw new ApiError(
+      HTTP_CODES.UNAUTHORIZED,
+      error,
+      ERROR_CODES.REFRESH_TOKEN_ERROR
+    );
   }
 
   const result = await pool.query("SELECT id FROM users WHERE id = $1", [
