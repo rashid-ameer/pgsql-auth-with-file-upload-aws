@@ -1,5 +1,7 @@
+import ERROR_CODES from "../constants/errorCodes.js";
 import HTTP_CODES from "../constants/httpCodes.js";
 import { login, signup } from "../services/auth.service.js";
+import ApiError from "../utils/apiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import {
   loginValidationSchema,
@@ -47,4 +49,16 @@ export const loginHandler = asyncHandler(async (req, res) => {
     data: { user, accessToken },
     message: "User logged in successfully.",
   });
+});
+
+export const refreshAccessTokenHandler = asyncHandler(async (req, res) => {
+  // validate a request
+  const refreshToken: string | undefined = req.cookies["refreshToken"];
+  if (!refreshToken) {
+    throw new ApiError(
+      HTTP_CODES.UNAUTHORIZED,
+      "Missing refresh token.",
+      ERROR_CODES.REFRESH_TOKEN_ERROR
+    );
+  }
 });

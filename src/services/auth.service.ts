@@ -5,6 +5,8 @@ import type { SafeUser, User } from "../types/user.type.js";
 import ApiError from "../utils/apiError.js";
 import { hashPassword, validatePassword } from "../utils/password.js";
 import env from "../config/env.js";
+import verifyToken, { type RefreshTokenPayload } from "../utils/jwt.js";
+import ERROR_CODES from "../constants/errorCodes.js";
 
 interface SignupParams {
   username: string;
@@ -13,9 +15,10 @@ interface SignupParams {
 }
 
 export const signup = async ({ email, password, username }: SignupParams) => {
-  const existingUser = await pool.query("SELECT id FROM users WHERE email = $1", [
-    email,
-  ]);
+  const existingUser = await pool.query(
+    "SELECT id FROM users WHERE email = $1",
+    [email]
+  );
 
   if (existingUser.rows.length > 0) {
     throw new ApiError(HTTP_CODES.CREATED, "Email already exists.");
@@ -71,4 +74,38 @@ export const login = async ({ email, password }: LoginParams) => {
 
   const { password: _, ...safeUser } = user;
   return { user: safeUser, accessToken, refreshToken };
+};
+
+export const refreshToken = async (refreshToken: string) => {
+  const { payload, error } = verifyToken<RefreshTokenPayload>(
+    refreshToken,
+    env.refreshTokenSecret
+  );
+  if (!payload) {
+    throw new ApiError(HTTP_CODES.UNAUTHORIZED, error, ERROR_CODES.REFRESH_TOKEN_ERROR);
+  }
+
+  const result = await pool.query("SELECT id FROM users WHERE id = $1", [
+    payload.userId,
+  ]);
+  if (result.rows.length === 0) {
+    throw new ApiError(
+      HTTP_CODES.UNAUTHORIZED,
+      "User not found",
+      ERROR_CODES.REFRESH_TOKEN_ERROR
+    );
+  }
+
+  const user = result.rows[0] as Pick<User, "id">;
+
+  const accessToken = jwt.sign({ userId: user.id }, env.accessTokenSecret, {
+    expiresIn: "15m",
+  });
+  const newRefreshToken = jwt.sign(
+    { userId: user.id },
+    env.refreshTokenSecret,
+    { expiresIn: "30d" }
+  );
+
+  return { accessToken, newRefreshToken };
 };

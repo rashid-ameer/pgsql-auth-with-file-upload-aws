@@ -13,7 +13,7 @@ const authorize: RequestHandler = async (req, _, next) => {
     throw new ApiError(
       HTTP_CODES.UNAUTHORIZED,
       "Missing access token.",
-      ERROR_CODES.INVALID_ACCESS_TOKEN
+      ERROR_CODES.ACCESS_TOKEN_ERROR
     );
   }
   // validate access token
@@ -25,7 +25,7 @@ const authorize: RequestHandler = async (req, _, next) => {
     throw new ApiError(
       HTTP_CODES.UNAUTHORIZED,
       error,
-      ERROR_CODES.INVALID_ACCESS_TOKEN
+      ERROR_CODES.ACCESS_TOKEN_ERROR
     );
   }
 
@@ -34,7 +34,11 @@ const authorize: RequestHandler = async (req, _, next) => {
     payload.userId,
   ]);
   if (result.rows.length === 0) {
-    throw new ApiError(HTTP_CODES.UNAUTHORIZED, "User not found.");
+    throw new ApiError(
+      HTTP_CODES.UNAUTHORIZED,
+      "User not found.",
+      ERROR_CODES.ACCESS_TOKEN_ERROR
+    );
   }
 
   req.userId = payload.userId;
