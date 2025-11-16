@@ -13,11 +13,11 @@ interface SignupParams {
 }
 
 export const signup = async ({ email, password, username }: SignupParams) => {
-  const existingUser = await pool.query("SELECT FROM users WHERE email = $1", [
+  const existingUser = await pool.query("SELECT id FROM users WHERE email = $1", [
     email,
   ]);
 
-  if (existingUser.rowCount && existingUser.rowCount > 0) {
+  if (existingUser.rows.length > 0) {
     throw new ApiError(HTTP_CODES.CREATED, "Email already exists.");
   }
 
