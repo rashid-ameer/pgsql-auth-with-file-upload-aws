@@ -31,7 +31,7 @@ export const signupValidationSchema = z.object(
   },
   {
     error: (iss) => {
-      return iss === undefined
+      return iss.input === undefined
         ? "Request body is required."
         : "Request body must be a valid object.";
     },
@@ -56,7 +56,7 @@ export const loginValidationSchema = z.object(
   },
   {
     error: (iss) => {
-      return iss === undefined
+      return iss.input === undefined
         ? "Request body is required."
         : "Request body must be a valid object.";
     },

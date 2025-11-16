@@ -11,9 +11,9 @@ function getEnv(key: string): string {
 const env = {
   port: getEnv("PORT"),
   nodeEnv: getEnv("NODE_ENV"),
-  DATABASE_URL: getEnv("DATABASE_URL"),
-  ACCESS_TOKEN_SECRET: getEnv("ACCESS_TOKEN_SECRET"),
-  REFRESH_TOKEN_SECRET: getEnv("REFRESH_TOKEN_SECRET"),
+  databaseUrl: getEnv("DATABASE_URL"),
+  accessTokenSecret: getEnv("ACCESS_TOKEN_SECRET"),
+  refreshTokenSecret: getEnv("REFRESH_TOKEN_SECRET"),
 };
 
 export default env;

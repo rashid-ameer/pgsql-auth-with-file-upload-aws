@@ -30,10 +30,10 @@ export const signup = async ({ email, password, username }: SignupParams) => {
 
   const user = result.rows[0] as SafeUser;
 
-  const accessToken = jwt.sign({ userId: user.id }, env.ACCESS_TOKEN_SECRET, {
+  const accessToken = jwt.sign({ userId: user.id }, env.accessTokenSecret, {
     expiresIn: "15m",
   });
-  const refreshToken = jwt.sign({ userId: user.id }, env.REFRESH_TOKEN_SECRET, {
+  const refreshToken = jwt.sign({ userId: user.id }, env.refreshTokenSecret, {
     expiresIn: "30d",
   });
 
@@ -62,10 +62,10 @@ export const login = async ({ email, password }: LoginParams) => {
     throw new ApiError(HTTP_CODES.NOT_FOUND, "Incorrect email or password.");
   }
 
-  const accessToken = jwt.sign({ userId: user.id }, env.ACCESS_TOKEN_SECRET, {
+  const accessToken = jwt.sign({ userId: user.id }, env.accessTokenSecret, {
     expiresIn: "15m",
   });
-  const refreshToken = jwt.sign({ userId: user.id }, env.REFRESH_TOKEN_SECRET, {
+  const refreshToken = jwt.sign({ userId: user.id }, env.refreshTokenSecret, {
     expiresIn: "30d",
   });
 
