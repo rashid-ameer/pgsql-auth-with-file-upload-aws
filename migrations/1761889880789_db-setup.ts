@@ -8,7 +8,7 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
   );
 
   pgm.sql(
-    "CREATE TABLE IF NOT EXISTS email_verifications (id SERIAL PRIMARY KEY, token TEXT NOT NULL, user_id INT NOT NULL, expires_at TIMESTAMP NOT NULL, created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE);"
+    "CREATE TABLE IF NOT EXISTS email_verifications (id SERIAL PRIMARY KEY, code TEXT NOT NULL, user_id INT NOT NULL, expires_at TIMESTAMP NOT NULL, created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE);"
   );
 }
 

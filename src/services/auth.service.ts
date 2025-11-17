@@ -7,6 +7,8 @@ import { hashPassword, validatePassword } from "../utils/password.js";
 import env from "../config/env.js";
 import verifyToken, { type RefreshTokenPayload } from "../utils/jwt.js";
 import ERROR_CODES from "../constants/errorCodes.js";
+import { getOtp } from "../utils/common.js";
+import resend from "../config/resend.js";
 
 interface SignupParams {
   username: string;
@@ -32,6 +34,20 @@ export const signup = async ({ email, password, username }: SignupParams) => {
   );
 
   const user = result.rows[0] as SafeUser;
+
+  const otp = getOtp();
+
+  await pool.query(
+    "INSERT INTO email_verifications (code, user_id, expires_at) VALUES ($1, $2, $3) RETURNING id",
+    [otp, user.id, new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)]
+  );
+
+  resend.emails.send({
+    from: "Acme <onboarding@resend.dev>",
+    to: ["delivered@resend.dev"],
+    subject: "Verify your email",
+    html: `<strong>${otp}</strong>`,
+  });
 
   const accessToken = jwt.sign({ userId: user.id }, env.accessTokenSecret, {
     expiresIn: "15m",

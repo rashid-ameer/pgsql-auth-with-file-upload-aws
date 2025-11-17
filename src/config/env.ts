@@ -14,6 +14,7 @@ const env = {
   databaseUrl: getEnv("DATABASE_URL"),
   accessTokenSecret: getEnv("ACCESS_TOKEN_SECRET"),
   refreshTokenSecret: getEnv("REFRESH_TOKEN_SECRET"),
+  resendApiKey: getEnv("RESEND_API_KEY"),
 };
 
 export default env;
