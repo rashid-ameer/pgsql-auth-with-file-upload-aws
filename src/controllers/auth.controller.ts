@@ -104,7 +104,7 @@ export const getEmailVerificationOtpHandler = asyncHandler(async (req, res) => {
   ).parse(req.userId);
 
   // call a service
-  await getEmailVerificationOtp(userId);
+   await getEmailVerificationOtp(userId);
 
   // return a success response
   res

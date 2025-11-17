@@ -9,6 +9,7 @@ import verifyToken, { type RefreshTokenPayload } from "../utils/jwt.js";
 import ERROR_CODES from "../constants/errorCodes.js";
 import { getOtp } from "../utils/common.js";
 import resend from "../config/resend.js";
+import sendEmail from "../utils/email.js";
 
 interface SignupParams {
   username: string;
@@ -42,12 +43,7 @@ export const signup = async ({ email, password, username }: SignupParams) => {
     [otp, user.id]
   );
 
-  resend.emails.send({
-    from: "Acme <onboarding@resend.dev>",
-    to: ["delivered@resend.dev"],
-    subject: "Verify your email",
-    html: `<strong>${otp}</strong>`,
-  });
+  sendEmail(user.email, "Verify Your Email", `<strong>${otp}</strong>`);
 
   const accessToken = jwt.sign({ userId: user.id }, env.accessTokenSecret, {
     expiresIn: "15m",
@@ -131,6 +127,11 @@ export const refreshAccessToken = async (refreshToken: string) => {
 };
 
 export const getEmailVerificationOtp = async (userId: number) => {
+  const { rows } = await pool.query<Pick<User, "email">>(
+    "SELECT id, email FROM users WHERE user_id = $1",
+    [userId]
+  );
+  const user = rows[0] as Pick<User, "email">;
   await pool.query("DELETE FROM email_verifications WHERE user_id = $1;", [
     userId,
   ]);
@@ -142,11 +143,16 @@ export const getEmailVerificationOtp = async (userId: number) => {
     [otp, userId]
   );
 
-  resend.emails.send({
-    from: "Acme <onboarding@resend.dev>",
-    to: ["delivered@resend.dev"],
-    subject: "Verify your email",
-    html: `<strong>${otp}</strong>`,
-  });
-  
+  const { error } = await sendEmail(
+    user.email,
+    "Verify Your Email",
+    `<strong>${otp}</strong>`
+  );
+
+  if (error) {
+    throw new ApiError(
+      HTTP_CODES.SERVICE_UNAVAILABLE,
+      "Error in sending email. Please try again."
+    );
+  }
 };
