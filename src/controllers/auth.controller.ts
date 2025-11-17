@@ -1,6 +1,11 @@
 import ERROR_CODES from "../constants/errorCodes.js";
 import HTTP_CODES from "../constants/httpCodes.js";
-import { login, refreshAccessToken, signup } from "../services/auth.service.js";
+import {
+  getEmailVerificationOtp,
+  login,
+  refreshAccessToken,
+  signup,
+} from "../services/auth.service.js";
 import ApiError from "../utils/apiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { clearAuthCookies } from "../utils/cookies.js";
@@ -8,6 +13,7 @@ import {
   loginValidationSchema,
   signupValidationSchema,
 } from "../validations/auth.validation.js";
+import { serialIdSchema } from "../validations/common.js";
 
 export const signupHandler = asyncHandler(async (req, res) => {
   // validate a request
@@ -89,4 +95,19 @@ export const logoutHandler = asyncHandler(async (_, res) => {
   clearAuthCookies(res)
     .status(HTTP_CODES.OK)
     .json({ success: true, message: "User logout successfully." });
+});
+
+export const getEmailVerificationOtpHandler = asyncHandler(async (req, res) => {
+  const userId = serialIdSchema(
+    "User id is required.",
+    "User id must be a number"
+  ).parse(req.userId);
+
+  // call a service
+  await getEmailVerificationOtp(userId);
+
+  // return a success response
+  res
+    .status(HTTP_CODES.OK)
+    .json({ success: true, message: "Otp send successfully on email." });
 });

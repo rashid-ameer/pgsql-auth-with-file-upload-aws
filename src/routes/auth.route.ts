@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  getEmailVerificationOtpHandler,
   loginHandler,
   logoutHandler,
   refreshAccessTokenHandler,
@@ -15,6 +16,7 @@ authRouter.post("/login", loginHandler);
 authRouter.get("/refresh", refreshAccessTokenHandler);
 
 // protected routes
+authRouter.get("/getEmailVerificationOtp", authorize, getEmailVerificationOtpHandler);
 authRouter.get("/logout", authorize, logoutHandler);
 
 export default authRouter;

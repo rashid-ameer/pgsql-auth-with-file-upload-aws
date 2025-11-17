@@ -38,8 +38,8 @@ export const signup = async ({ email, password, username }: SignupParams) => {
   const otp = getOtp();
 
   await pool.query(
-    "INSERT INTO email_verifications (code, user_id, expires_at) VALUES ($1, $2, $3) RETURNING id",
-    [otp, user.id, new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)]
+    `INSERT INTO email_verifications (code, user_id, expires_at) VALUES ($1, $2, NOW() + INTERVAL '30 minutes') RETURNING id`,
+    [otp, user.id]
   );
 
   resend.emails.send({
@@ -128,4 +128,25 @@ export const refreshAccessToken = async (refreshToken: string) => {
   );
 
   return { accessToken, newRefreshToken };
+};
+
+export const getEmailVerificationOtp = async (userId: number) => {
+  await pool.query("DELETE FROM email_verifications WHERE user_id = $1;", [
+    userId,
+  ]);
+
+  const otp = getOtp();
+
+  await pool.query(
+    `INSERT INTO email_verifications (code, user_id, expires_at) VALUES ($1, $2, NOW() + INTERVAL '30 minutes') RETURNING id`,
+    [otp, userId]
+  );
+
+  resend.emails.send({
+    from: "Acme <onboarding@resend.dev>",
+    to: ["delivered@resend.dev"],
+    subject: "Verify your email",
+    html: `<strong>${otp}</strong>`,
+  });
+  
 };
