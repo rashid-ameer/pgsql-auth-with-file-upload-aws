@@ -83,3 +83,10 @@ export const refreshAccessTokenHandler = asyncHandler(async (req, res) => {
     message: "Access token refreshed successfully.",
   });
 });
+
+export const logoutHandler = asyncHandler(async (_, res) => {
+  // clear cookies and send a success response
+  clearAuthCookies(res)
+    .status(HTTP_CODES.OK)
+    .json({ success: true, message: "User logout successfully." });
+});
