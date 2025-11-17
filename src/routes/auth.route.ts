@@ -5,6 +5,7 @@ import {
   logoutHandler,
   refreshAccessTokenHandler,
   signupHandler,
+  validateEmailVerificationOtpHandler,
 } from "../controllers/auth.controller.js";
 import authorize from "../middlewares/auth.middleware.js";
 
@@ -16,7 +17,16 @@ authRouter.post("/login", loginHandler);
 authRouter.get("/refresh", refreshAccessTokenHandler);
 
 // protected routes
-authRouter.get("/getEmailVerificationOtp", authorize, getEmailVerificationOtpHandler);
+authRouter.get(
+  "/get-email-verification-otp",
+  authorize,
+  getEmailVerificationOtpHandler
+);
+authRouter.post(
+  "/verify-email",
+  authorize,
+  validateEmailVerificationOtpHandler
+);
 authRouter.get("/logout", authorize, logoutHandler);
 
 export default authRouter;

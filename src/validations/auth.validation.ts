@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { serialIdSchema } from "./common.js";
 
 export const signupValidationSchema = z.object(
   {
@@ -52,6 +53,23 @@ export const loginValidationSchema = z.object(
         iss.input === undefined
           ? "Password is required."
           : "Password must be string",
+    }),
+  },
+  {
+    error: (iss) => {
+      return iss.input === undefined
+        ? "Request body is required."
+        : "Request body must be a valid object.";
+    },
+  }
+);
+
+export const emailVerificationValidationSchema = z.object(
+  {
+    userId: serialIdSchema("User id is required.", "Invalid user id."),
+    code: z.string({
+      error: (iss) =>
+        iss.input === undefined ? "Otp is required." : "Otp must be string.",
     }),
   },
   {

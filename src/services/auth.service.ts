@@ -128,7 +128,7 @@ export const refreshAccessToken = async (refreshToken: string) => {
 
 export const getEmailVerificationOtp = async (userId: number) => {
   const { rows } = await pool.query<Pick<User, "email">>(
-    "SELECT id, email FROM users WHERE user_id = $1",
+    "SELECT email FROM users WHERE id = $1",
     [userId]
   );
   const user = rows[0] as Pick<User, "email">;
@@ -148,11 +148,42 @@ export const getEmailVerificationOtp = async (userId: number) => {
     "Verify Your Email",
     `<strong>${otp}</strong>`
   );
-
   if (error) {
+    console.log(error);
     throw new ApiError(
       HTTP_CODES.SERVICE_UNAVAILABLE,
       "Error in sending email. Please try again."
     );
   }
+};
+
+interface ValidateEmailVerificationOtpParams {
+  userId: number;
+  code: string;
+}
+
+export const validateEmailVerificationOtp = async ({
+  userId,
+  code,
+}: ValidateEmailVerificationOtpParams) => {
+  const { rows: vRows } = await pool.query(
+    "SELECT id FROM email_verifications WHERE user_id = $1 AND code = $2 AND expires_at > NOW()",
+    [userId, code]
+  );
+
+  if (vRows.length === 0) {
+    throw new ApiError(HTTP_CODES.BAD_REQUEST, "Invalid or expired OTP.");
+  }
+
+  const { rows: uRows } = await pool.query<SafeUser>(
+    "UPDATE users SET is_verified = true WHERE id = $1 RETURNING id, username, email, is_verified, profile_image, created_at, updated_at;",
+    [userId]
+  );
+
+  const user = uRows[0] as SafeUser;
+  await pool.query("DELETE FROM email_verifications WHERE user_id = $1", [
+    user.id,
+  ]);
+
+  return user;
 };

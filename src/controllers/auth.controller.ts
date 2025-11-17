@@ -5,11 +5,13 @@ import {
   login,
   refreshAccessToken,
   signup,
+  validateEmailVerificationOtp,
 } from "../services/auth.service.js";
 import ApiError from "../utils/apiError.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { clearAuthCookies } from "../utils/cookies.js";
 import {
+  emailVerificationValidationSchema,
   loginValidationSchema,
   signupValidationSchema,
 } from "../validations/auth.validation.js";
@@ -104,10 +106,31 @@ export const getEmailVerificationOtpHandler = asyncHandler(async (req, res) => {
   ).parse(req.userId);
 
   // call a service
-   await getEmailVerificationOtp(userId);
+  await getEmailVerificationOtp(userId);
 
   // return a success response
   res
     .status(HTTP_CODES.OK)
     .json({ success: true, message: "Otp send successfully on email." });
 });
+
+export const validateEmailVerificationOtpHandler = asyncHandler(
+  async (req, res) => {
+    // validate a request
+    const request = emailVerificationValidationSchema.parse({
+      userId: req.userId,
+      ...req.body,
+    });
+
+    // call a service
+    const user = await validateEmailVerificationOtp(request);
+
+    // send a respnose
+
+    res.status(HTTP_CODES.OK).json({
+      success: true,
+      data: user,
+      message: "User verified successfully.",
+    });
+  }
+);
