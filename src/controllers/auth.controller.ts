@@ -10,6 +10,7 @@ import {
   validateEmailVerificationOtp,
 } from "../services/auth.service.js";
 import ApiError from "../utils/apiError.js";
+import ApiResponse from "../utils/apiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { clearAuthCookies, setAuthCookie } from "../utils/cookies.js";
 import {
@@ -29,11 +30,9 @@ export const signupHandler = asyncHandler(async (req, res) => {
   const { user, accessToken, refreshToken } = await signup(request);
 
   // send response
-  setAuthCookie(res, refreshToken).status(HTTP_CODES.CREATED).json({
-    success: true,
-    data: { user, accessToken },
-    message: "User created successfully.",
-  });
+  setAuthCookie(res, refreshToken)
+    .status(HTTP_CODES.CREATED)
+    .json(new ApiResponse("User created successfully.", { user, accessToken }));
 });
 
 export const loginHandler = asyncHandler(async (req, res) => {
@@ -43,11 +42,11 @@ export const loginHandler = asyncHandler(async (req, res) => {
   const { user, accessToken, refreshToken } = await login(request);
 
   // send response
-  setAuthCookie(res, refreshToken).status(HTTP_CODES.OK).json({
-    success: true,
-    data: { user, accessToken },
-    message: "User logged in successfully.",
-  });
+  setAuthCookie(res, refreshToken)
+    .status(HTTP_CODES.OK)
+    .json(
+      new ApiResponse("User logged in successfully.", { user, accessToken })
+    );
 });
 
 export const refreshAccessTokenHandler = asyncHandler(async (req, res) => {
@@ -68,18 +67,16 @@ export const refreshAccessTokenHandler = asyncHandler(async (req, res) => {
   );
 
   // send a response
-  setAuthCookie(res, newRefreshToken).status(HTTP_CODES.OK).json({
-    success: true,
-    data: { accessToken },
-    message: "Access token refreshed successfully.",
-  });
+  setAuthCookie(res, newRefreshToken)
+    .status(HTTP_CODES.OK)
+    .json(new ApiResponse("Access token refreshed successfully.", accessToken));
 });
 
 export const logoutHandler = asyncHandler(async (_, res) => {
   // clear cookies and send a success response
   clearAuthCookies(res)
     .status(HTTP_CODES.OK)
-    .json({ success: true, message: "User logout successfully." });
+    .json(new ApiResponse("User logout successfully."));
 });
 
 export const getEmailVerificationOtpHandler = asyncHandler(async (req, res) => {
@@ -95,7 +92,7 @@ export const getEmailVerificationOtpHandler = asyncHandler(async (req, res) => {
   // return a success response
   res
     .status(HTTP_CODES.OK)
-    .json({ success: true, message: "Otp send successfully on email." });
+    .json(new ApiResponse("Otp send successfully on email."));
 });
 
 export const validateEmailVerificationOtpHandler = asyncHandler(
@@ -110,11 +107,9 @@ export const validateEmailVerificationOtpHandler = asyncHandler(
     const user = await validateEmailVerificationOtp(request);
 
     // send a respnose
-    res.status(HTTP_CODES.OK).json({
-      success: true,
-      data: user,
-      message: "User verified successfully.",
-    });
+    res
+      .status(HTTP_CODES.OK)
+      .json(new ApiResponse("User verified successfully.", user));
   }
 );
 
@@ -122,15 +117,17 @@ export const requestPasswordResetHandler = asyncHandler(async (req, res) => {
   // validate a request
   const { email } = requestPasswordResetRequestSchema.parse(req.body);
 
-  // call a servide
-
+  // call a service
   await requestPasswordReset(email);
 
   // send a response
-  res.status(HTTP_CODES.OK).json({
-    success: true,
-    message: "If this email exists, password reset link has been sent.",
-  });
+  res
+    .status(HTTP_CODES.OK)
+    .json(
+      new ApiResponse(
+        "If this email exists, password reset link has been sent."
+      )
+    );
 });
 
 export const resetPasswordHandler = asyncHandler(async (req, res) => {
@@ -143,5 +140,5 @@ export const resetPasswordHandler = asyncHandler(async (req, res) => {
   // send a response
   res
     .status(HTTP_CODES.OK)
-    .json({ success: true, message: "Password changed successfully." });
+    .json(new ApiResponse("Password changed successfully."));
 });
