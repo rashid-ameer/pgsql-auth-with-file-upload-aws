@@ -10,7 +10,7 @@ export const signupRequestSchema = z.object(
     email: zEmailSchema,
     password: zRequiredString("Password").regex(
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,25}$/,
-      "Password must be 8-25 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character.."
+      "Password must be 8-25 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character."
     ),
   },
   {
@@ -67,6 +67,23 @@ export const validateEmailVerificationOtpRequestSchema = z.object(
 export const requestPasswordResetRequestSchema = z.object(
   {
     email: zEmailSchema,
+  },
+  {
+    error: (iss) => {
+      return iss.input === undefined
+        ? "Request body is required."
+        : "Request body must be a valid object.";
+    },
+  }
+);
+
+export const resetPasswordRequestSchema = z.object(
+  {
+    password: zRequiredString("Password").regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,25}$/,
+      "Password must be 8-25 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character."
+    ),
+    token: zRequiredString("Token"),
   },
   {
     error: (iss) => {

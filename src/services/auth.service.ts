@@ -199,19 +199,29 @@ export const requestPasswordReset = async (email: string) => {
     [email]
   );
 
-  if (uRows.length === 0) return;
-
-  const user = uRows[0] as Pick<User, "id">;
+  const user = uRows[0];
+  if (!user) return;
 
   const token = crypto.randomBytes(32).toString("hex");
   const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
-  const { rows: pvRows } = await pool.query<PasswordVerification>(
-    "INSERT INTO password_verifications (token, user_id, expires_at) VALUES ($1, $2, NOW() + INTERVAL '30 minutes') RETURNING *;",
+  await pool.query("DELETE FROM password_verifications WHERE user_id = $1;", [
+    user.id,
+  ]);
+
+  const { rows: pvRows } = await pool.query<
+    Pick<PasswordVerification, "expires_at">
+  >(
+    "INSERT INTO password_verifications (token, user_id, expires_at) VALUES ($1, $2, NOW() + INTERVAL '30 minutes') RETURNING expires_at;",
     [hashedToken, user.id]
   );
 
-  const passwordVerification = pvRows[0] as PasswordVerification;
+  const [passwordVerification] = pvRows;
+  if (!passwordVerification)
+    throw new ApiError(
+      HTTP_CODES.INTERNAL_SERVER_ERROR,
+      "Internal server error."
+    );
 
   const url = `${
     env.frontendUrl
@@ -228,4 +238,36 @@ export const requestPasswordReset = async (email: string) => {
       "Failed to send email. Please try again."
     );
   }
+};
+
+interface ResetPasswordParams {
+  password: string;
+  token: string;
+}
+export const resetPassword = async ({
+  password,
+  token,
+}: ResetPasswordParams) => {
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+  const { rows } = await pool.query<
+    Pick<PasswordVerification, "id" | "user_id">
+  >(
+    "SELECT id, user_id FROM password_verifications WHERE token = $1 AND expires_at > NOW();",
+    [hashedToken]
+  );
+  const passwordVerification = rows[0];
+
+  if (!passwordVerification)
+    throw new ApiError(HTTP_CODES.BAD_REQUEST, "Invalid or expired token.");
+
+  const hashedPassword = await hashPassword(password);
+  await pool.query("UPDATE users SET password = $1 WHERE id = $2;", [
+    hashedPassword,
+    passwordVerification.user_id,
+  ]);
+
+  await pool.query("DELETE FROM password_verifications WHERE user_id = $1;", [
+    passwordVerification.user_id,
+  ]);
 };

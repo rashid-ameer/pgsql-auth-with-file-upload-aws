@@ -5,6 +5,7 @@ import {
   login,
   refreshAccessToken,
   requestPasswordReset,
+  resetPassword,
   signup,
   validateEmailVerificationOtp,
 } from "../services/auth.service.js";
@@ -15,6 +16,7 @@ import {
   emailVerificationOtpRequestSchema,
   loginRequestSchema,
   requestPasswordResetRequestSchema,
+  resetPasswordRequestSchema,
   signupRequestSchema,
   validateEmailVerificationOtpRequestSchema,
 } from "../validations/auth.validation.js";
@@ -125,10 +127,21 @@ export const requestPasswordResetHandler = asyncHandler(async (req, res) => {
   await requestPasswordReset(email);
 
   // send a response
+  res.status(HTTP_CODES.OK).json({
+    success: true,
+    message: "If this email exists, password reset link has been sent.",
+  });
+});
+
+export const resetPasswordHandler = asyncHandler(async (req, res) => {
+  // validate a request
+  const request = resetPasswordRequestSchema.parse(req.body);
+
+  // call a service
+  await resetPassword(request);
+
+  // send a response
   res
     .status(HTTP_CODES.OK)
-    .json({
-      success: true,
-      message: "If this email exists, password reset link has been sent.",
-    });
+    .json({ success: true, message: "Password changed successfully." });
 });

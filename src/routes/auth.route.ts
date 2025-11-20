@@ -1,10 +1,12 @@
 import { Router } from "express";
+
 import {
   getEmailVerificationOtpHandler,
   loginHandler,
   logoutHandler,
   refreshAccessTokenHandler,
   requestPasswordResetHandler,
+  resetPasswordHandler,
   signupHandler,
   validateEmailVerificationOtpHandler,
 } from "../controllers/auth.controller.js";
@@ -16,7 +18,8 @@ const authRouter = Router();
 authRouter.post("/signup", signupHandler);
 authRouter.post("/login", loginHandler);
 authRouter.get("/refresh", refreshAccessTokenHandler);
-authRouter.post("/request-password-reset", requestPasswordResetHandler)
+authRouter.post("/request-password-reset", requestPasswordResetHandler);
+authRouter.post("/reset-password", resetPasswordHandler);
 
 // protected routes
 authRouter.get(
