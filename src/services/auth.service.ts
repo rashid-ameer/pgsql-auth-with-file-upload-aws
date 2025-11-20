@@ -22,23 +22,27 @@ interface SignupParams {
 }
 
 export const signup = async ({ email, password, username }: SignupParams) => {
-  const { rows } = await pool.query("SELECT id FROM users WHERE email = $1", [
-    email,
-  ]);
+  const { rows: existingUsers } = await pool.query(
+    "SELECT id FROM users WHERE email = $1",
+    [email]
+  );
 
-  if (rows.length > 0) {
+  if (existingUsers.length > 0) {
     throw new ApiError(HTTP_CODES.CREATED, "Email already exists.");
   }
 
   const hashedPassword = await hashPassword(password);
 
-  const result = await pool.query<SafeUser>(
+  const { rows } = await pool.query<SafeUser>(
     "INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id, username, email, is_verified, profile_image, created_at, updated_at",
     [username, email, hashedPassword]
   );
-
-  const user = result.rows[0] as SafeUser;
-
+  const [user] = rows;
+  if (!user)
+    throw new ApiError(
+      HTTP_CODES.INTERNAL_SERVER_ERROR,
+      "Internal server error."
+    );
   const otp = getOtp();
 
   await pool.query(
@@ -72,8 +76,8 @@ export const login = async ({ email, password }: LoginParams) => {
     throw new ApiError(HTTP_CODES.NOT_FOUND, "Incorrect email or password.");
   }
 
-  const user = rows[0] as User;
-
+  const [user] = rows;
+  if (!user) throw new ApiError(HTTP_CODES.INTERNAL_SERVER_ERROR,"Internal server error.")
   const isPasswordValid = await validatePassword(user.password, password);
 
   if (!isPasswordValid) {
@@ -108,15 +112,14 @@ export const refreshAccessToken = async (refreshToken: string) => {
     "SELECT id FROM users WHERE id = $1",
     [payload.userId]
   );
-  if (rows.length === 0) {
+  const [user] = rows;
+  if (!user) {
     throw new ApiError(
       HTTP_CODES.UNAUTHORIZED,
       "User not found",
       ERROR_CODES.REFRESH_TOKEN_ERROR
     );
   }
-
-  const user = rows[0] as Pick<User, "id">;
 
   const accessToken = jwt.sign({ userId: user.id }, env.accessTokenSecret, {
     expiresIn: "15m",
