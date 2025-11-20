@@ -4,6 +4,7 @@ import {
   getEmailVerificationOtp,
   login,
   refreshAccessToken,
+  requestPasswordReset,
   signup,
   validateEmailVerificationOtp,
 } from "../services/auth.service.js";
@@ -13,6 +14,7 @@ import { clearAuthCookies, setAuthCookie } from "../utils/cookies.js";
 import {
   emailVerificationOtpRequestSchema,
   loginRequestSchema,
+  requestPasswordResetRequestSchema,
   signupRequestSchema,
   validateEmailVerificationOtpRequestSchema,
 } from "../validations/auth.validation.js";
@@ -113,3 +115,20 @@ export const validateEmailVerificationOtpHandler = asyncHandler(
     });
   }
 );
+
+export const requestPasswordResetHandler = asyncHandler(async (req, res) => {
+  // validate a request
+  const { email } = requestPasswordResetRequestSchema.parse(req.body);
+
+  // call a servide
+
+  await requestPasswordReset(email);
+
+  // send a response
+  res
+    .status(HTTP_CODES.OK)
+    .json({
+      success: true,
+      message: "If this email exists, password reset link has been sent.",
+    });
+});

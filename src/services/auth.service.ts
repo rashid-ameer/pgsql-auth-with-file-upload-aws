@@ -1,7 +1,9 @@
+import crypto from "crypto";
 import jwt from "jsonwebtoken";
 
 import type { SafeUser, User } from "../types/user.type.js";
 import { type RefreshTokenPayload } from "../utils/jwt.js";
+import type { PasswordVerification } from "../types/passwordVerification.type.js";
 
 import pool from "../config/db.js";
 import HTTP_CODES from "../constants/httpCodes.js";
@@ -155,7 +157,7 @@ export const getEmailVerificationOtp = async ({
   if (error) {
     throw new ApiError(
       HTTP_CODES.SERVICE_UNAVAILABLE,
-      "Error in sending email. Please try again."
+      "Failed to send email. Please try again."
     );
   }
 };
@@ -189,4 +191,41 @@ export const validateEmailVerificationOtp = async ({
   ]);
 
   return user;
+};
+
+export const requestPasswordReset = async (email: string) => {
+  const { rows: uRows } = await pool.query<Pick<User, "id">>(
+    "SELECT id FROM users WHERE email = $1;",
+    [email]
+  );
+
+  if (uRows.length === 0) return;
+
+  const user = uRows[0] as Pick<User, "id">;
+
+  const token = crypto.randomBytes(32).toString("hex");
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+  const { rows: pvRows } = await pool.query<PasswordVerification>(
+    "INSERT INTO password_verifications (token, user_id, expires_at) VALUES ($1, $2, NOW() + INTERVAL '30 minutes') RETURNING *;",
+    [hashedToken, user.id]
+  );
+
+  const passwordVerification = pvRows[0] as PasswordVerification;
+
+  const url = `${
+    env.frontendUrl
+  }?token=${token}&exp=${passwordVerification.expires_at.getTime()}`;
+  const { error } = await sendEmail(
+    email,
+    "Reset Password Link",
+    `<strong>${url}</strong>`
+  );
+
+  if (error) {
+    throw new ApiError(
+      HTTP_CODES.SERVICE_UNAVAILABLE,
+      "Failed to send email. Please try again."
+    );
+  }
 };

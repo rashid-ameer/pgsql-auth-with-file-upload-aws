@@ -63,3 +63,16 @@ export const validateEmailVerificationOtpRequestSchema = z.object(
     },
   }
 );
+
+export const requestPasswordResetRequestSchema = z.object(
+  {
+    email: zEmailSchema,
+  },
+  {
+    error: (iss) => {
+      return iss.input === undefined
+        ? "Request body is required."
+        : "Request body must be a valid object.";
+    },
+  }
+);

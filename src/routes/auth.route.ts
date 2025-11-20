@@ -4,6 +4,7 @@ import {
   loginHandler,
   logoutHandler,
   refreshAccessTokenHandler,
+  requestPasswordResetHandler,
   signupHandler,
   validateEmailVerificationOtpHandler,
 } from "../controllers/auth.controller.js";
@@ -15,6 +16,7 @@ const authRouter = Router();
 authRouter.post("/signup", signupHandler);
 authRouter.post("/login", loginHandler);
 authRouter.get("/refresh", refreshAccessTokenHandler);
+authRouter.post("/request-password-reset", requestPasswordResetHandler)
 
 // protected routes
 authRouter.get(
