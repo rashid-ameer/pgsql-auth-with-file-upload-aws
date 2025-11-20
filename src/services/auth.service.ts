@@ -1,14 +1,16 @@
 import jwt from "jsonwebtoken";
+
+import type { SafeUser, User } from "../types/user.type.js";
+import { type RefreshTokenPayload } from "../utils/jwt.js";
+
 import pool from "../config/db.js";
 import HTTP_CODES from "../constants/httpCodes.js";
-import type { SafeUser, User } from "../types/user.type.js";
 import ApiError from "../utils/apiError.js";
 import { hashPassword, validatePassword } from "../utils/password.js";
 import env from "../config/env.js";
-import verifyToken, { type RefreshTokenPayload } from "../utils/jwt.js";
+import verifyToken from "../utils/jwt.js";
 import ERROR_CODES from "../constants/errorCodes.js";
 import { getOtp } from "../utils/common.js";
-import resend from "../config/resend.js";
 import sendEmail from "../utils/email.js";
 
 interface SignupParams {
@@ -18,12 +20,11 @@ interface SignupParams {
 }
 
 export const signup = async ({ email, password, username }: SignupParams) => {
-  const existingUser = await pool.query(
-    "SELECT id FROM users WHERE email = $1",
-    [email]
-  );
+  const { rows } = await pool.query("SELECT id FROM users WHERE email = $1", [
+    email,
+  ]);
 
-  if (existingUser.rows.length > 0) {
+  if (rows.length > 0) {
     throw new ApiError(HTTP_CODES.CREATED, "Email already exists.");
   }
 
@@ -43,7 +44,7 @@ export const signup = async ({ email, password, username }: SignupParams) => {
     [otp, user.id]
   );
 
-  sendEmail(user.email, "Verify Your Email", `<strong>${otp}</strong>`);
+  await sendEmail(user.email, "Verify Your Email", `<strong>${otp}</strong>`);
 
   const accessToken = jwt.sign({ userId: user.id }, env.accessTokenSecret, {
     expiresIn: "15m",
@@ -60,16 +61,16 @@ interface LoginParams {
   password: string;
 }
 export const login = async ({ email, password }: LoginParams) => {
-  const result = await pool.query<User>(
+  const { rows } = await pool.query<User>(
     "SELECT * FROM users WHERE email = $1",
     [email]
   );
 
-  if (result.rows.length === 0) {
+  if (rows.length === 0) {
     throw new ApiError(HTTP_CODES.NOT_FOUND, "Incorrect email or password.");
   }
 
-  const user = result.rows[0] as User;
+  const user = rows[0] as User;
 
   const isPasswordValid = await validatePassword(user.password, password);
 
@@ -101,10 +102,11 @@ export const refreshAccessToken = async (refreshToken: string) => {
     );
   }
 
-  const result = await pool.query("SELECT id FROM users WHERE id = $1", [
-    payload.userId,
-  ]);
-  if (result.rows.length === 0) {
+  const { rows } = await pool.query<Pick<User, "id">>(
+    "SELECT id FROM users WHERE id = $1",
+    [payload.userId]
+  );
+  if (rows.length === 0) {
     throw new ApiError(
       HTTP_CODES.UNAUTHORIZED,
       "User not found",
@@ -112,7 +114,7 @@ export const refreshAccessToken = async (refreshToken: string) => {
     );
   }
 
-  const user = result.rows[0] as Pick<User, "id">;
+  const user = rows[0] as Pick<User, "id">;
 
   const accessToken = jwt.sign({ userId: user.id }, env.accessTokenSecret, {
     expiresIn: "15m",
@@ -126,12 +128,14 @@ export const refreshAccessToken = async (refreshToken: string) => {
   return { accessToken, newRefreshToken };
 };
 
-export const getEmailVerificationOtp = async (userId: number) => {
-  const { rows } = await pool.query<Pick<User, "email">>(
-    "SELECT email FROM users WHERE id = $1",
-    [userId]
-  );
-  const user = rows[0] as Pick<User, "email">;
+interface EmailVerificationOtpParams {
+  userId: number;
+  email: string;
+}
+export const getEmailVerificationOtp = async ({
+  userId,
+  email,
+}: EmailVerificationOtpParams) => {
   await pool.query("DELETE FROM email_verifications WHERE user_id = $1;", [
     userId,
   ]);
@@ -144,12 +148,11 @@ export const getEmailVerificationOtp = async (userId: number) => {
   );
 
   const { error } = await sendEmail(
-    user.email,
+    email,
     "Verify Your Email",
     `<strong>${otp}</strong>`
   );
   if (error) {
-    console.log(error);
     throw new ApiError(
       HTTP_CODES.SERVICE_UNAVAILABLE,
       "Error in sending email. Please try again."

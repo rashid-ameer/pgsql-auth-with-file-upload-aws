@@ -1,9 +1,11 @@
 import type { RequestHandler } from "express";
+import type { User } from "../types/user.type.js";
+import { type AccessTokenPayload } from "../utils/jwt.js";
 
 import ApiError from "../utils/apiError.js";
 import HTTP_CODES from "../constants/httpCodes.js";
 import env from "../config/env.js";
-import verifyToken, { type AccessTokenPayload } from "../utils/jwt.js";
+import verifyToken from "../utils/jwt.js";
 import pool from "../config/db.js";
 import ERROR_CODES from "../constants/errorCodes.js";
 
@@ -30,10 +32,10 @@ const authorize: RequestHandler = async (req, _, next) => {
   }
 
   // check if the user exists
-  const result = await pool.query("SELECT * FROM users WHERE id = $1", [
+  const { rows } = await pool.query<User>("SELECT * FROM users WHERE id = $1", [
     payload.userId,
   ]);
-  if (result.rows.length === 0) {
+  if (rows.length === 0) {
     throw new ApiError(
       HTTP_CODES.UNAUTHORIZED,
       "User not found.",
@@ -41,7 +43,10 @@ const authorize: RequestHandler = async (req, _, next) => {
     );
   }
 
-  req.userId = payload.userId;
+  const user = rows[0] as User;
+
+  req.userId = user.id;
+  req.email = user.email;
   next();
 };
 
