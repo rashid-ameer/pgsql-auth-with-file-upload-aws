@@ -1,5 +1,7 @@
 import { unlink, createReadStream } from "fs";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
 
 import s3 from "../config/s3.js";
 import HTTP_CODES from "../constants/httpCodes.js";
@@ -62,6 +64,18 @@ export const getPostByIdHandler = asyncHandler(async (req, res) => {
   // call a service
   const post = await getPostById(postId);
 
+  const media = await Promise.all(
+    post.media.map(async (mediaKey) => {
+      const command = new GetObjectCommand({
+        Bucket: env.awsS3Bucket,
+        Key: mediaKey,
+      });
+      const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+      return url;
+    })
+  );
+  post.media = media;
+
   // send a response back
   res
     .status(HTTP_CODES.OK)
@@ -72,8 +86,25 @@ export const getPostsHandler = asyncHandler(async (req, res) => {
   // call a service
   const posts = await getPosts();
 
+  const updatedPosts = await Promise.all(
+    posts.map(async (post) => {
+      const media = await Promise.all(
+        post.media.map(async (mediaKey) => {
+          const command = new GetObjectCommand({
+            Bucket: env.awsS3Bucket,
+            Key: mediaKey,
+          });
+          const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+          return url;
+        })
+      );
+      post.media = media;
+      return post;
+    })
+  );
+
   // send a response back
   res
     .status(HTTP_CODES.OK)
-    .json(new ApiResponse("Posts fetched successfully.", posts));
+    .json(new ApiResponse("Posts fetched successfully.", updatedPosts));
 });
