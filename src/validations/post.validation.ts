@@ -1,7 +1,18 @@
 import z from "zod";
-import { zSerialIdSchema } from "./common.js";
+import { zRequiredString, zSerialIdSchema } from "./common.js";
 
-export const getPostByIdRequestSchema = z.object({
-  postId: zSerialIdSchema("Post id is required.", "Post id must be a number."),
-  userId: zSerialIdSchema("User id is required.", "User id must a number."),
-});
+export const createPostRequestSchema = z.object(
+  {
+    content: zRequiredString("Content"),
+    userId: zSerialIdSchema(
+      "User id is required.",
+      "User id must be a number."
+    ),
+  },
+  {
+    error: (iss) =>
+      iss.input === undefined
+        ? "Request body is required."
+        : "Request body must be a valid object.",
+  }
+);

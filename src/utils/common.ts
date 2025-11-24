@@ -1,3 +1,5 @@
+import crypto from "crypto";
+
 export const getOtp = () => {
   const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   const digits = "123456789";
@@ -17,3 +19,6 @@ export const getOtp = () => {
     .sort(() => Math.random() - 0.5)
     .join("");
 };
+
+export const generateKey = (bytes: number = 32) =>
+  crypto.randomBytes(bytes).toString("hex");
