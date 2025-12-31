@@ -1,4 +1,4 @@
-enum HTTP_ERRORS {
+enum HTTP_CODES {
   OK = 200,
   CREATED = 201,
   BAD_REQUEST = 400,
@@ -10,4 +10,5 @@ enum HTTP_ERRORS {
   SERVICE_UNAVAILABLE = 503,
 }
 
-export default HTTP_ERRORS;
+export type HttpCodes = typeof HTTP_CODES;
+export default HTTP_CODES;

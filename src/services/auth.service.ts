@@ -1,5 +1,5 @@
 import pool from "../config/db.js";
-import HTTP_ERRORS from "../constants/httpErrors.js";
+import HTTP_CODES from "../constants/httpCodes.js";
 import ApiError from "../utils/apiError.js";
 import { hashPassword } from "../utils/password.js";
 
@@ -18,7 +18,7 @@ export const signup = async ({ email, password, username }: SignupParams) => {
   );
 
   if (rowCount && rowCount > 0) {
-    throw new ApiError(HTTP_ERRORS.CREATED, "Email already exists.");
+    throw new ApiError(HTTP_CODES.BAD_REQUEST, "Email already exists.");
   }
 
   const hashedPassword = await hashPassword(password);
@@ -32,7 +32,7 @@ export const signup = async ({ email, password, username }: SignupParams) => {
 
   if (!user) {
     throw new ApiError(
-      HTTP_ERRORS.INTERNAL_SERVER_ERROR,
+      HTTP_CODES.INTERNAL_SERVER_ERROR,
       "Error in creating user. Please try again."
     );
   }
