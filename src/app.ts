@@ -1,7 +1,7 @@
 import express from "express";
 import cookieParser from "cookie-parser";
 
-import { authRouter } from "./routes/index.js";
+import router from "./routes/index.js";
 
 const app = express();
 
@@ -15,7 +15,7 @@ app.get("/", (_, res) => {
   res.json({ message: "Status is healthy" });
 });
 
-// Routes
-app.use("/auth", authRouter);
+// app router - contains all routes
+app.use(router);
 
 export default app;

@@ -1,4 +1,3 @@
-import pool from "../config/db.js";
 import { signup } from "../services/auth.service.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { signupValidationSchema } from "../validations/auth.validation.js";

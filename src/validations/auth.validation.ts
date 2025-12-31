@@ -8,7 +8,7 @@ export const signupValidationSchema = z.object({
           ? "Username is required."
           : "Username must be string",
     })
-    .min(3, "Username must be atleast 3 characters."),
+    .min(3, "Username must be atleast 2 characters."),
   email: z.email({
     error: (iss) => {
       if (iss.input === undefined) return "Email is required.";
